@@ -4,6 +4,7 @@ Página estática (GitHub Pages) para instalar no celular os APKs do BarGestão:
 
 - **App Capacitor**: [stk-bargestao-capacitor](https://github.com/CelsoAlmeidaLF/stk-bargestao-capacitor)
 - **App nativo (Kotlin)**: [stk-bargestao-kotlin](https://github.com/CelsoAlmeidaLF/stk-bargestao-kotlin)
+- **iPhone (Capacitor iOS)**: [stk-bargestao-ios](https://github.com/CelsoAlmeidaLF/stk-bargestao-ios) (link para as versões; o .ipa sai do build no Mac do GitHub Actions)
 
 Página: https://celsoalmeidalf.github.io/stk-bargestao-android/
 
