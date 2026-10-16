@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="dark light">
+<title>BarGestão · Android</title>
+<meta name="description" content="Instale o BarGestão no Android: comandas, estoque, caixa e auditoria.">
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+  :root {
+    --bg: #0E1210; --surface: #171D1A; --surface-2: #202824; --line: #2C3733;
+    --text: #E6EEEA; --muted: #93A39C;
+    --accent: #6FCF97; --on-accent: #0E1210; --warn: #E0C185; --info: #7FA6CF; --down: #E08585;
+    --glass: rgba(23, 29, 26, .62);
+    --sans: 'Space Grotesk', system-ui, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #F7FAF8; --surface: #FFFFFF; --surface-2: #EEF3F0; --line: #D5DFDA;
+      --text: #14201A; --muted: #5B6B63; --accent: #2E9E5E; --on-accent: #FFFFFF;
+      --warn: #9A7420; --info: #3E6B99; --glass: rgba(255, 255, 255, .7);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+    font: 16px/1.55 var(--sans);
+    background-image: radial-gradient(60rem 30rem at 85% -10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent),
+                      radial-gradient(40rem 24rem at -10% 110%, color-mix(in srgb, var(--info) 12%, transparent), transparent);
+    background-attachment: fixed;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 40px 16px 56px; }
+  svg.i { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+  header { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
+  header img { width: 64px; height: 64px; border-radius: 16px; border: 1px solid var(--line); }
+  h1 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.2rem); line-height: 1.15; letter-spacing: -.01em; }
+  .sub { margin: 4px 0 0; color: var(--muted); }
+
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .card {
+    background: var(--glass); border: 1px solid var(--line); border-radius: 16px; padding: 24px;
+    backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%);
+    transform: translateZ(0); display: flex; flex-direction: column; gap: 14px;
+  }
+  .card h2 { margin: 0; font-size: 1.25rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .tag { font: 500 .72rem/1 var(--mono); padding: 5px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .tag.rec { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+  .card p { margin: 0; color: var(--muted); }
+  .meta { font: .82rem/1.4 var(--mono); color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; min-height: 1.2em; }
+  .row { display: flex; gap: 16px; align-items: center; margin-top: auto; flex-wrap: wrap; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 20px;
+    border-radius: 12px; background: var(--accent); color: var(--on-accent); text-decoration: none;
+    font: 600 .95rem/1 var(--mono); transition: transform .15s, filter .15s;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:active { transform: scale(.98); }
+  .btn:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .btn.sec { background: var(--surface-2); color: var(--text); border: 1px solid var(--line); }
+
+  .qr { display: none; flex-direction: column; align-items: center; gap: 6px; font: .72rem/1.2 var(--mono); color: var(--muted); }
+  .qr div { background: #fff; padding: 6px; border-radius: 10px; line-height: 0; }
+  .qr svg { width: 104px; height: 104px; }
+  @media (hover: hover) and (pointer: fine) { .qr { display: flex; } }
+
+  section.passos { margin-top: 32px; }
+  h3 { margin: 0 0 12px; font-size: 1.05rem; display: flex; align-items: center; gap: 10px; }
+  ol { margin: 0; padding-left: 1.3rem; color: var(--muted); }
+  ol li { margin: 6px 0; }
+  ol b { color: var(--text); font-weight: 600; }
+
+  .cert { margin-top: 16px; }
+  .cert code { display: block; font: .78rem/1.5 var(--mono); color: var(--text); background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; word-break: break-all; margin-top: 8px; }
+  .card p.aviso { color: var(--warn); }
+
+  footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
+  footer a { color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-smartphone" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header>
+    <img src="icone.png" alt="" width="64" height="64">
+    <div>
+      <h1>BarGestão para Android</h1>
+      <p class="sub">Comandas, estoque, caixa e auditoria com dados cifrados no celular. Baixe o APK direto, sem loja.</p>
+    </div>
+  </header>
+
+  <div class="grid">
+    <article class="card" data-apk="bargestao-capacitor.apk">
+      <h2><svg class="i"><use href="#i-layers"/></svg>App Capacitor <span class="tag rec">Recomendado</span></h2>
+      <p>O BarGestão do navegador, empacotado como app Android (Capacitor). Dados do bar cifrados num banco SQLite no celular; a liberação do acesso vem da Governança Systekna (precisa de internet no cadastro e periodicamente).</p>
+      <div class="meta" aria-live="polite"></div>
+      <div class="row">
+        <a class="btn" href="apk/bargestao-capacitor.apk" download="bargestao-capacitor.apk" type="application/vnd.android.package-archive"><svg class="i"><use href="#i-download"/></svg>Baixar APK</a>
+        <div class="qr"><div></div>Aponte a câmera</div>
+      </div>
+    </article>
+
+    <article class="card" data-apk="bargestao-kotlin.apk">
+      <h2><svg class="i"><use href="#i-cpu"/></svg>App nativo <span class="tag">Kotlin</span></h2>
+      <p>O mesmo BarGestão reescrito em Kotlin: mais rápido, com biometria do aparelho. Mesma criptografia e mesmo backup do app do navegador (um abre o do outro).</p>
+      <div class="meta" aria-live="polite"></div>
+      <div class="row">
+        <a class="btn sec" href="apk/bargestao-kotlin.apk" download="bargestao-kotlin.apk" type="application/vnd.android.package-archive"><svg class="i"><use href="#i-download"/></svg>Baixar APK</a>
+        <div class="qr"><div></div>Aponte a câmera</div>
+      </div>
+    </article>
+  </div>
+
+  <section class="passos card">
+    <h3><svg class="i"><use href="#i-smartphone"/></svg>Como instalar</h3>
+    <ol>
+      <li>Abra esta página <b>no celular Android</b> e toque em <b>Baixar APK</b>.</li>
+      <li>Quando o download terminar, toque na notificação ou abra o arquivo em <b>Downloads</b>.</li>
+      <li>Na primeira vez, o Android pede para <b>permitir a instalação de apps desconhecidos</b> para o navegador. Permita e volte.</li>
+      <li>Toque em <b>Instalar</b>. Para atualizar, baixe de novo: a versão nova instala por cima e mantém seus dados.</li>
+    </ol>
+    <p class="aviso">No primeiro uso, o estabelecimento faz o cadastro e aguarda a aprovação da Governança Systekna. Se o Android avisar "Play Protect", toque em Mais detalhes → Instalar mesmo assim.</p>
+
+    <div class="cert">
+      <h3><svg class="i"><use href="#i-shield"/></svg>Assinatura</h3>
+      <p>Os dois apps são assinados pela Systekna (Celso de Almeida Leite F). Impressão digital SHA-256 do certificado:</p>
+      <code>1B:21:A6:AC:F3:B0:3B:04:98:89:57:6F:49:21:3A:83:B9:15:49:CF:C2:F7:6F:16:B5:68:34:55:E7:2D:E2:36</code>
+    </div>
+  </section>
+
+  <footer>
+    <span>© 2026 Systekna · BarGestão · Todos os direitos reservados</span>
+    <span>
+      <a href="https://github.com/CelsoAlmeidaLF/stk-bargestao-capacitor/releases">Versões (Capacitor)</a> ·
+      <a href="https://github.com/CelsoAlmeidaLF/stk-bargestao-kotlin/releases">Versões (Kotlin)</a>
+    </span>
+  </footer>
+</div>
+
+<script src="qrcode.js"></script>
+<script>
+  const kb = n => n >= 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.round(n / 1024) + ' KB';
+  const data = s => new Date(s).toLocaleDateString('pt-BR');
+
+  // APKs servidos por esta página (mesmo site): o download não passa pelo github.com,
+  // que no Android pode ser capturado pelo app do GitHub e não baixar nada.
+  const cards = document.querySelectorAll('.card[data-apk]');
+  for (const card of cards) {
+    const link = card.querySelector('.btn').href; // já absoluto
+
+    // QR para quem abre no computador: o celular lê e baixa direto.
+    try {
+      const qr = qrcode(0, 'M'); qr.addData(link); qr.make();
+      card.querySelector('.qr div').innerHTML = qr.createSvgTag({ cellSize: 3, margin: 0, scalable: true, alt: { text: 'QR code do download', id: 'qr-' + card.dataset.apk } });
+    } catch (_) { card.querySelector('.qr').remove(); }
+  }
+
+  // Versão, tamanho e data (gravados por scripts/publicar-apk.sh nos repos dos apps).
+  fetch('apk/versoes.json', { cache: 'no-cache' })
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(v => {
+      for (const card of cards) {
+        const info = v[card.dataset.apk]; if (!info) continue;
+        const meta = card.querySelector('.meta');
+        for (const t of [info.versao, info.tamanho && kb(info.tamanho), info.data && 'publicado em ' + data(info.data + 'T12:00:00')]) {
+          if (!t) continue;
+          const el = document.createElement('span'); el.textContent = t; meta.append(el);
+        }
+      }
+    })
+    .catch(() => {});
+</script>
+</body>
+</html>
